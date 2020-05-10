@@ -1,0 +1,2 @@
+vasilinha; 001, 5.00; 2
+caderno 12 matérias; 002, 23.00; 10

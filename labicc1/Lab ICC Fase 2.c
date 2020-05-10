@@ -18,7 +18,7 @@ int main(){
         else if(opcao == 3)
             estoque();
         else{
-            printf("Deseja fazer mais alguma operaÁ„o? (Digite s/n)");
+            printf("Deseja fazer mais alguma opera√ß√£o? (Digite s/n)");
             scanf("%c", &op);
             if(op == 'n')
                 return 0;
@@ -36,7 +36,7 @@ void clientes(){
     while(1){
         printf("Digite o CPF do cliente");
         scanf("%s", &cpf);
-        if(/*CPF j· cadastrado na base de dados*/){
+        if(/*CPF j√° cadastrado na base de dados*/){
             printf("CPF ja cadastrado, tentar outro CPF? (Digite s/n)");
             scanf("%d", &opcao);
             if(opcao == 'n')
@@ -48,7 +48,7 @@ void clientes(){
     while(1){
         printf("Digite o email do cliente (ate o @)");
         scanf("%s", &email);
-        if(/*Email j· cadastrado na base de dados*/){
+        if(/*Email j√° cadastrado na base de dados*/){
             printf("Email ja cadastrado, tentar outro email? (Digite s/n)");
             scanf("%c", &opcao);
             if(opcao == 'n')
@@ -68,7 +68,7 @@ void produtos(){
     printf("--Cadastro de Produtos--");
     printf("Digite o nome do produto");
     scanf("%s", &nome);
-    if(/*Nome j· existe na base de dados*/){
+    if(/*Nome j√° existe na base de dados*/){
         printf("Produto ja cadastrado, deseja acessar o estoque? (Digite s/n)");
         scanf("%c", &opcao);
         if(opcao == 's')
@@ -81,7 +81,7 @@ void produtos(){
     scanf("%d", &quantidade);
     printf("Digite o codigo de barras do produto");
     scanf("%d", &codigo);
-    if(/*CÛdigo de barras j· cadastrado na base de dados*/){
+    if(/*C√≥digo de barras j√° cadastrado na base de dados*/){
         printf("Codigo ja cadastrado, deseja acessar o estoque? (Digite s/n)");
         scanf("%c", opcao);
         if(opcao == 's')
@@ -103,7 +103,7 @@ void estoque(){
     while(1){
         printf("Digite o codigo de barras do produto");
         scanf("%d", &codigo);
-        if(/*Produto n„o existe na base de dados*/){
+        if(/*Produto n√£o existe na base de dados*/){
             printf("Produto nao existente, deseja colocar outro codigo? (Digite s/n)")
             scanf("%c", &op);
             if(op == 'n')
