@@ -48,18 +48,15 @@ void cliente_destruir(cliente *in) {
 }
 
 /*Recebe um cliente, exibe informação formatada sobre ele (ideal para printar)*/
-char *cliente_info(cliente *in) {
+void cliente_info(cliente *in) {
   if (in == NULL) {
     printf("** Cliente inválido **\n");
     return (NULL);
   }
   char buffer[MAX_LINESIZE] = "";
   snprintf(buffer, MAX_LINESIZE, "CPF: %lld | Nome: %s | Email: %s", in->cpf, in->nome, in->email);
-
-  //Alocar uma string do tamanho certinho e copiar
-  char *out = malloc((strlen(buffer)+1)*sizeof(char));
-  strcpy(out, buffer);
-
+  char *out;
+  strdup(out, buffer);
   return(out);
 }
 
@@ -74,8 +71,8 @@ cliente *cliente_parse(char *in) {
 
   //Cortar usando o delimitador
   long long int in_cpf = strtol(strtok(s, ";"), NULL, 10);
-  char *in_nome = strtok(NULL, ";");
-  char *in_email = strtok(NULL, ";");
+  char *in_nome        = strtok(NULL, ";");
+  char *in_email       = strtok(NULL, ";");
 
   cliente *out = cliente_criar(in_cpf, in_nome, in_email);
   free(s);
@@ -92,8 +89,7 @@ char *cliente_unparse(cliente *in) {
   char buffer[MAX_LINESIZE] = "";
   snprintf(buffer, MAX_LINESIZE, "%lld;%s;%s", in->cpf, in->nome, in->email);
   //Alocar uma string do tamanho certinho e copiar
-  char *out = malloc(strlen(buffer) + 1);
-  strcpy(out, buffer);
+  char *out = strdup(buffer);
 
   return(out);
 }
