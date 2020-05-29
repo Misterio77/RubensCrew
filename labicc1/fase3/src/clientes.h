@@ -9,7 +9,7 @@ char *cliente_info(cliente *in);
 
 cliente **cliente_list();
 cliente *cliente_get(long long int cpf);
-cliente *cliente_post(cliente *in);
+int cliente_post(cliente *in);
 int cliente_delete(long long int cpf);
 
 #endif

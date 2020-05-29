@@ -9,7 +9,7 @@ char *produto_info(produto *in);
 
 produto **produto_list();
 produto *produto_get(int id);
-produto *produto_post(produto *in);
+int produto_post(produto *in);
 int produto_delete(int id);
 
 #endif

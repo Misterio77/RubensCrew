@@ -1,11 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h> //Booleans
 #include <string.h>  //Funções para strings
 
 #include "produtos.h"
 
 #define MAX_LINESIZE 300 //Tamanho para cada linha
+
+//Cores para output
+#define RED     "\x1b[31m"
+#define GREEN   "\x1b[32m"
+#define YELLOW  "\x1b[33m"
+#define BLUE    "\x1b[34m"
+#define MAGENTA "\x1b[35m"
+#define CYAN    "\x1b[36m"
+#define RESET   "\x1b[0m"
 
 //====== Estrutura (privada) ======
 
@@ -23,13 +31,13 @@ struct _produto {
 produto *produto_criar(int id, char *nome, float valor, int estoque) {
   //Checar se algum campo é inválido
   if (id == 0 || nome == NULL) {
-    printf("** Campos inválidos **\n");
+    printf(RED"** Campos inválidos **\n"RESET);
     return(NULL);
   }
   //Produto a ser retornoado
   produto *out = malloc(sizeof(produto));
   if (out == NULL) {
-    printf("** Erro ao alocar **\n");
+    printf(RED"** Erro ao alocar **\n"RESET);
     return(NULL);
   }
   //Campos
@@ -43,15 +51,16 @@ produto *produto_criar(int id, char *nome, float valor, int estoque) {
 
 /*Dado produto, desaloca ele e todos os seus campos*/
 void produto_destruir(produto *in) {
-  free(in->nome);
-  free(in);
-  return;
+  if (in != NULL) {
+    free(in->nome);
+    free(in);
+  }
 }
 
 /*Recebe um produto, retorna informação formatada sobre ele*/
 char *produto_info(produto *in) {
   if (in == NULL) {
-    printf("** Produto inválido **\n");
+    printf(RED"** Produto inválido **\n"RESET);
     return (NULL);
   }
   
@@ -96,7 +105,8 @@ produto *produto_parse(char *in) {
 /*Recebe um produto, e devolve a linha formatada para armazenamento ou busca*/
 char *produto_unparse(produto *in) {
   if (in == NULL) {
-    printf("** Produto inválido **\n");
+    printf(RED"** Produto inválido **\n"RESET);
+    return(NULL);
   }
   //Converter na string formatada usando um buffer temporário
   char buffer[MAX_LINESIZE] = "";
@@ -116,7 +126,7 @@ produto **produto_list() {
   //Abrir o arquivo, checar por erros
   arquivo = fopen("data/produtos.txt","r");
   if (arquivo == NULL) {
-    printf("** Erro ao abrir o arquivo produtos **\n");
+    printf(RED"** Erro ao abrir o arquivo produtos **\n"RESET);
     return(NULL);
   }
   //Declara o vetor apontando para null
@@ -131,14 +141,14 @@ produto **produto_list() {
     //Realocar o vetor para a quantidade de linhas lidas até agora
     vetor_produtos = realloc(vetor_produtos, (posicao+1) * sizeof(produto*));
     if (vetor_produtos == NULL) {
-      printf("** Erro ao realocar **\n");
+      printf(RED"** Erro ao realocar **\n"RESET);
       return(NULL);
     }
     //Formata e aloca o produto
     produto *produto_atual = produto_parse(linha);
     //Vamos verificar se é valido
     if (produto_atual == NULL) {
-      printf("** Erro ao processar o produto na posição %d **\n", posicao);
+      printf(RED"** Erro ao processar o produto na posição %d **\n"RESET, posicao);
       //Caso não seja válido, não vamos incrementar posicao (evitar espaços vazios)
     }
     else {
@@ -146,7 +156,7 @@ produto **produto_list() {
       vetor_produtos[posicao] = produto_atual;
       posicao++;
     }
-  } while(true);
+  } while(1);
 
   //Vou adicionar um espaço e colocar NULL, para sabermos onde acaba o array
   vetor_produtos = realloc(vetor_produtos, (posicao+1) * sizeof(produto*));
@@ -176,30 +186,31 @@ produto *produto_get(int id) {
   //Liberar a memória do vetor
   for (int j = 0; vetor_produtos[j] != NULL; j++) produto_destruir(vetor_produtos[j]);
   free(vetor_produtos);
-  printf("** Produto não encontrado **\n");
+  printf(RED"** Produto não encontrado **\n"RESET);
   return(NULL);
 
 }
 
-/*Adiciona um novo produto. O retorna caso seja bem sucedido, NULL caso contrário*/
-produto *produto_post(produto *in) {
+/*Adiciona um novo produto. Retorna 0 caso seja bem sucedido, -1 caso contrário*/
+int produto_post(produto *in) {
   FILE *arquivo;
   //Abrir o arquivo, checar por erros
   arquivo = fopen("data/produtos.txt", "a");
   if (arquivo == NULL) {
-    printf("** Erro ao escrever o arquivo produtos **\n");
-    return(NULL);
+    printf(RED"** Erro ao escrever o arquivo produtos **\n"RESET);
+    return(0);
   }
 
   //Transformar o produto a ser adicionado em string formatada
   char *output = produto_unparse(in);
+  if (output == NULL) return (-1);
   //Colocar no fim do arquivo
   fputs(output, arquivo);
   fputs("\n", arquivo);
 
   fclose(arquivo);
 
-  return(in);
+  return(-1);
 }
 
 /*Apaga um produto do banco de dados, dado seu id. Retorna 0 caso bem sucedido, -1 caso contrário.*/
@@ -208,12 +219,12 @@ int produto_delete(int id) {
   FILE *arquivo_source, *arquivo_target;
   arquivo_source = fopen("data/produtos.txt", "r");
   if (arquivo_source == NULL) {
-    printf("** Erro ao ler o arquivo produtos **\n");
+    printf(RED"** Erro ao ler o arquivo produtos **\n"RESET);
     return(-1);
   }
   arquivo_target = fopen("data/produtos.tmp", "w");
   if (arquivo_source == NULL) {
-    printf("** Erro ao criar um novo arquivo produtos **\n");
+    printf(RED"** Erro ao criar um novo arquivo produtos **\n"RESET);
     fclose(arquivo_source);
     return(-1);
   }
@@ -235,7 +246,7 @@ int produto_delete(int id) {
       fputs(linha, arquivo_target);
       fputs("\n", arquivo_target);
     }
-  } while(true);
+  } while(1);
 
   free(buscado_unparsed);
   fclose(arquivo_source);

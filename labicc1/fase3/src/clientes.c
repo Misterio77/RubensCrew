@@ -1,11 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h> //Booleans
 #include <string.h>  //Funções para strings
 
 #include "clientes.h"
 
 #define MAX_LINESIZE 300 //Tamanho para cada linha
+
+//Cores para output
+#define RED     "\x1b[31m"
+#define GREEN   "\x1b[32m"
+#define YELLOW  "\x1b[33m"
+#define BLUE    "\x1b[34m"
+#define MAGENTA "\x1b[35m"
+#define CYAN    "\x1b[36m"
+#define RESET   "\x1b[0m"
 
 //====== Estrutura (privada) ======
 
@@ -22,13 +30,13 @@ struct _cliente {
 cliente *cliente_criar(long long int cpf, char *nome, char *email) {
   //Checar se algum campo é NULL
   if (cpf == 0 || nome == NULL || email == NULL) {
-    printf("** Campos inválidos **\n");
+    printf(RED"** Campos inválidos fornecidos**\n"RESET);
     return(NULL);
   }
   //Cliente a ser retornoado
   cliente *out = malloc(sizeof(cliente));
   if (out == NULL) {
-    printf("** Erro ao alocar **\n");
+    printf(RED"** Erro ao alocar **\n"RESET);
     return(NULL);
   }
   //Campos
@@ -41,16 +49,17 @@ cliente *cliente_criar(long long int cpf, char *nome, char *email) {
 
 /*Dado cliente, desaloca ele e todos os seus campos*/
 void cliente_destruir(cliente *in) {
-  free(in->nome);
-  free(in->email);
-  free(in);
-  return;
+  if(in != NULL) {
+      free(in->nome);
+      free(in->email);
+      free(in);
+  }
 }
 
 /*Recebe um cliente, devolve informação formatada sobre ele*/
 char *cliente_info(cliente *in) {
   if (in == NULL) {
-    printf("** Cliente inválido **\n");
+    printf(RED"** Cliente inválido **\n"RESET);
     return (NULL);
   }
   char buffer[MAX_LINESIZE] = "";
@@ -92,7 +101,8 @@ cliente *cliente_parse(char *in) {
 /*Recebe um cliente, e devolve a linha formatada para armazenamento ou busca*/
 char *cliente_unparse(cliente *in) {
   if (in == NULL) {
-    printf("** Cliente inválido **\n");
+    printf(RED"** Cliente inválido **\n"RESET);
+    return(NULL);
   }
   //Converter na string formatada usando um buffer temporário
   char buffer[MAX_LINESIZE] = "";
@@ -112,41 +122,47 @@ cliente **cliente_list() {
   //Abrir o arquivo, checar por erros
   arquivo = fopen("data/clientes.txt","r");
   if (arquivo == NULL) {
-    printf("** Erro ao abrir o arquivo clientes **\n");
+    printf(RED"** Erro ao abrir o arquivo clientes **\n"RESET);
     return(NULL);
   }
   //Declara o vetor apontando para null
   cliente **vetor_clientes = NULL;
 
-  int posicao = 0;
+  int posicao_vetor = 0;
+  int posicao_arquivo = 0;
   do {
+    posicao_arquivo++;
     char linha[MAX_LINESIZE] = "";
+
     //Ler a linha, caso fgets retorne NULL, vamos sair do loop
     if (fgets(linha, MAX_LINESIZE, arquivo) == NULL) break;
     linha[strcspn(linha, "\n")] = 0; //Remover trailing newline
+
     //Realocar o vetor para a quantidade de linhas lidas até agora
-    vetor_clientes = realloc(vetor_clientes, (posicao+1) * sizeof(cliente*));
+    vetor_clientes = realloc(vetor_clientes, (posicao_vetor+1) * sizeof(cliente*));
     if (vetor_clientes == NULL) {
-      printf("** Erro ao realocar **\n");
+      printf(RED"** Erro ao realocar **\n"RESET);
       return(NULL);
     }
+
     //Formata e aloca o cliente
     cliente *cliente_atual = cliente_parse(linha);
+
     //Vamos verificar se é valido
     if (cliente_atual == NULL) {
-      printf("** Erro ao processar o cliente na posição %d **\n", posicao);
-      //Caso não seja válido, não vamos incrementar posicao (evitar espaços vazios)
+      printf(RED"** Erro ao processar o cliente na linha %d, pulando **\n"RESET, posicao_arquivo);
+      //Caso não seja válido, não vamos incrementar posicao_vetor (evitar espaços vazios)
     }
     else {
-      //Caso seja válido, armazenar
-      vetor_clientes[posicao] = cliente_atual;
-      posicao++;
+      //Caso seja válido, armazenar, incrementar posicao_vetor
+      vetor_clientes[posicao_vetor] = cliente_atual;
+      posicao_vetor++;
     }
-  } while(true);
+  } while(1);
 
   //Vou adicionar um espaço e colocar NULL, para sabermos onde acaba o array
-  vetor_clientes = realloc(vetor_clientes, (posicao+1) * sizeof(cliente*));
-  vetor_clientes[posicao] = NULL;
+  vetor_clientes = realloc(vetor_clientes, (posicao_vetor+1) * sizeof(cliente*));
+  vetor_clientes[posicao_vetor] = NULL;
 
   fclose(arquivo);
   return(vetor_clientes);
@@ -172,30 +188,32 @@ cliente *cliente_get(long long int cpf) {
   //Liberar a memória do vetor
   for (int j = 0; vetor_clientes[j] != NULL; j++) cliente_destruir(vetor_clientes[j]);
   free(vetor_clientes);
-  printf("** Cliente não encontrado **\n");
+  printf(RED"** Cliente não encontrado **\n"RESET);
   return(NULL);
 
 }
 
-/*Adiciona um novo cliente. O retorna caso seja bem sucedido, NULL caso contrário*/
-cliente *cliente_post(cliente *in) {
+/*Adiciona um novo cliente. Retorna 0 caso seja bem sucedido, -1 caso contrário*/
+int cliente_post(cliente *in) {
   FILE *arquivo;
   //Abrir o arquivo, checar por erros
   arquivo = fopen("data/clientes.txt", "a");
   if (arquivo == NULL) {
-    printf("** Erro ao escrever o arquivo clientes **\n");
-    return(NULL);
+    printf(RED"** Erro ao escrever o arquivo clientes **\n"RESET);
+    return(-1);
   }
 
   //Transformar o cliente a ser adicionado em string formatada
   char *output = cliente_unparse(in);
+  if (output == NULL) return (-1);
   //Colocar no fim do arquivo
   fputs(output, arquivo);
   fputs("\n", arquivo);
-
+  
+  free(output);
   fclose(arquivo);
 
-  return(in);
+  return(0);
 }
 
 /*Apaga um cliente do banco de dadoss, dado seu cpf. Retorna 0 caso bem sucedido, -1 caso contrário.*/
@@ -204,12 +222,12 @@ int cliente_delete(long long int cpf) {
   FILE *arquivo_source, *arquivo_target;
   arquivo_source = fopen("data/clientes.txt", "r");
   if (arquivo_source == NULL) {
-    printf("** Erro ao ler o arquivo clientes **\n");
+    printf(RED"** Erro ao ler o arquivo clientes **\n"RESET);
     return(-1);
   }
   arquivo_target = fopen("data/clientes.tmp", "w");
   if (arquivo_source == NULL) {
-    printf("** Erro ao criar um novo arquivo clientes **\n");
+    printf(RED"** Erro ao criar um novo arquivo clientes **\n"RESET);
     fclose(arquivo_source);
     return(-1);
   }
@@ -231,7 +249,7 @@ int cliente_delete(long long int cpf) {
       fputs(linha, arquivo_target);
       fputs("\n", arquivo_target);
     }
-  } while(true);
+  } while(1);
 
   free(buscado_unparsed);
   fclose(arquivo_source);
