@@ -79,6 +79,10 @@ void imprimir_cliente(cliente *in) {
 }
 
 int main() {
+  char arquivo_clientes[] = "data/clientes.txt";
+  char arquivo_produtos[] = "data/produtos.txt";
+
+
   printf(CYAN"  __  __                             _  _         _            \n");
   printf(" |  \\/  |                           | |(_)       | |           \n");
   printf(" | \\  / |  ___  _ __  ___  __ _   __| | _  _ __  | |__    ___  \n");
@@ -130,7 +134,7 @@ int main() {
         //Listar clientes
         if (escolha == 1) {
           //Criar vetor com clientes
-          cliente **vetor = cliente_list();
+          cliente **vetor = cliente_list(arquivo_clientes);
           //Caso lido corretamente
           if (vetor != NULL) {
             printf(BLUE"------\n"RESET);
@@ -151,7 +155,7 @@ int main() {
           printf("Digite o CPF do cliente (apenas números): \n");
           //Receber cpf do usuario, buscar utilizando ele
           //E atribuir a instancia
-          cliente *consulta = cliente_get(ler_cpf());
+          cliente *consulta = cliente_get(arquivo_clientes, ler_cpf());
           if (consulta != NULL) {
             printf(BLUE"------\n"RESET);
             //Imprimir instancia
@@ -175,14 +179,11 @@ int main() {
           free(nome);
           free(email);
 
-          //Verificar se foi possivel criar a instancia
-          if (novo != NULL) {
-            //Postar instancia na database
-            //Caso seja bem-sucedido (resposta 0), imprimir na tela avisando
-            if (cliente_post(novo) == 0) printf(GREEN"Cliente adicionado!\n"RESET);
-            //Desalocar instancia
-            cliente_destruir(novo);
-          }
+          //Postar instancia na database
+          //Caso seja bem-sucedido (resposta 0), imprimir na tela avisando
+          if (cliente_post(arquivo_clientes, novo) == 0) printf(GREEN"Cliente adicionado!\n"RESET);
+          //Desalocar instancia
+          cliente_destruir(novo);   
         }
 
         //Apagar um cliente
@@ -190,7 +191,7 @@ int main() {
           printf("Digite o CPF do cliente (apenas números): \n");
           //Ler cpf e apagar cliente da database
           //Caso seja bem-sucedido (resposta 0), imprimir na tela avisando
-          if (cliente_delete(ler_cpf()) == 0) printf(GREEN"Cliente removido!\n"RESET);
+          if (cliente_delete(arquivo_clientes, ler_cpf()) == 0) printf(GREEN"Cliente removido!\n"RESET);
         }
 
         //Sair do menu

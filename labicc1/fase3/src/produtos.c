@@ -121,10 +121,10 @@ char *produto_unparse(produto *in) {
 //====== Funções para modificação da database. ======
 
 /*Retorna um vetor com todos os produtos armazenados, NULL caso mal-sucedido*/
-produto **produto_list() {
+produto **produto_list(char *database) {
   FILE *arquivo;
   //Abrir o arquivo, checar por erros
-  arquivo = fopen("data/produtos.txt","r");
+  arquivo = fopen(database,"r");
   if (arquivo == NULL) {
     printf(RED"** Erro ao abrir o arquivo produtos **\n"RESET);
     return(NULL);
@@ -132,44 +132,50 @@ produto **produto_list() {
   //Declara o vetor apontando para null
   produto **vetor_produtos = NULL;
 
-  int posicao = 0;
+  int posicao_vetor = 0;
+  int posicao_arquivo = 0;
   do {
+    posicao_arquivo++;
     char linha[MAX_LINESIZE] = "";
+
     //Ler a linha, caso fgets retorne NULL, vamos sair do loop
     if (fgets(linha, MAX_LINESIZE, arquivo) == NULL) break;
     linha[strcspn(linha, "\n")] = 0; //Remover trailing newline
+
     //Realocar o vetor para a quantidade de linhas lidas até agora
-    vetor_produtos = realloc(vetor_produtos, (posicao+1) * sizeof(produto*));
+    vetor_produtos = realloc(vetor_produtos, (posicao_vetor+1) * sizeof(produto*));
     if (vetor_produtos == NULL) {
       printf(RED"** Erro ao realocar **\n"RESET);
       return(NULL);
     }
+
     //Formata e aloca o produto
     produto *produto_atual = produto_parse(linha);
+
     //Vamos verificar se é valido
     if (produto_atual == NULL) {
-      printf(RED"** Erro ao processar o produto na posição %d **\n"RESET, posicao);
-      //Caso não seja válido, não vamos incrementar posicao (evitar espaços vazios)
+      printf(RED"** Erro ao processar o produto na posição %d, pulando **\n"RESET, posicao_arquivo);
+      //Caso não seja válido, não vamos incrementar posicao_vetor (evitar espaços vazios)
     }
     else {
       //Caso seja válido, armazenar
-      vetor_produtos[posicao] = produto_atual;
-      posicao++;
+      vetor_produtos[posicao_vetor] = produto_atual;
+      posicao_vetor++;
     }
   } while(1);
 
   //Vou adicionar um espaço e colocar NULL, para sabermos onde acaba o array
-  vetor_produtos = realloc(vetor_produtos, (posicao+1) * sizeof(produto*));
-  vetor_produtos[posicao] = NULL;
+  vetor_produtos = realloc(vetor_produtos, (posicao_vetor+1) * sizeof(produto*));
+  vetor_produtos[posicao_vetor] = NULL;
 
   fclose(arquivo);
   return(vetor_produtos);
 }
 
 /*Retorna um produto, dado seu id. (Implementado como busca sequencial) Retorna NULL caso mal-sucedido*/
-produto *produto_get(int id) {
+produto *produto_get(char *database, int id) {
   //Carregar os produtos do arquivo, guardar num vetor
-  produto **vetor_produtos = produto_list();
+  produto **vetor_produtos = produto_list(database);
   //Ponteiro para retornar
   produto *retorno = NULL;
   //Iterar pelos produtos
@@ -192,10 +198,10 @@ produto *produto_get(int id) {
 }
 
 /*Adiciona um novo produto. Retorna 0 caso seja bem sucedido, -1 caso contrário*/
-int produto_post(produto *in) {
+int produto_post(char *database, produto *in) {
   FILE *arquivo;
   //Abrir o arquivo, checar por erros
-  arquivo = fopen("data/produtos.txt", "a");
+  arquivo = fopen(database, "a");
   if (arquivo == NULL) {
     printf(RED"** Erro ao escrever o arquivo produtos **\n"RESET);
     return(0);
@@ -214,22 +220,22 @@ int produto_post(produto *in) {
 }
 
 /*Apaga um produto do banco de dados, dado seu id. Retorna 0 caso bem sucedido, -1 caso contrário.*/
-int produto_delete(int id) {
+int produto_delete(char *database, int id) {
   //Abrir os arquivos e verificar por erros
   FILE *arquivo_source, *arquivo_target;
-  arquivo_source = fopen("data/produtos.txt", "r");
+  arquivo_source = fopen(database, "r");
   if (arquivo_source == NULL) {
     printf(RED"** Erro ao ler o arquivo produtos **\n"RESET);
     return(-1);
   }
-  arquivo_target = fopen("data/produtos.tmp", "w");
+  arquivo_target = fopen("produtos.tmp", "w");
   if (arquivo_source == NULL) {
     printf(RED"** Erro ao criar um novo arquivo produtos **\n"RESET);
     fclose(arquivo_source);
     return(-1);
   }
   //Definir linha a ser buscada
-  produto *buscado = produto_get(id);
+  produto *buscado = produto_get(database, id);
   if (buscado == NULL) {
     fclose(arquivo_source);
     fclose(arquivo_target);
@@ -252,9 +258,8 @@ int produto_delete(int id) {
   fclose(arquivo_source);
   fclose(arquivo_target);
 
-  //TODO Handle erros que n sao da busca, e sim de escrever o arquivo
-  remove("data/produtos.txt");
-  rename("data/produtos.tmp", "data/produtos.txt");
+  remove(database);
+  rename("produtos.tmp", database);
 
   return(0);
 }

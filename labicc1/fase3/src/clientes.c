@@ -117,10 +117,10 @@ char *cliente_unparse(cliente *in) {
 //====== Funções para modificação da database. ======
 
 /*Retorna um vetor com todos os clientes armazenados, NULL caso mal-sucedido*/
-cliente **cliente_list() {
+cliente **cliente_list(char *database) {
   FILE *arquivo;
   //Abrir o arquivo, checar por erros
-  arquivo = fopen("data/clientes.txt","r");
+  arquivo = fopen(database,"r");
   if (arquivo == NULL) {
     printf(RED"** Erro ao abrir o arquivo clientes **\n"RESET);
     return(NULL);
@@ -169,9 +169,9 @@ cliente **cliente_list() {
 }
 
 /*Retorna um cliente, dado seu cpf. (Implementado como busca sequencial) Retorna NULL caso mal-sucedido*/
-cliente *cliente_get(long long int cpf) {
+cliente *cliente_get(char *database, long long int cpf) {
   //Carregar os clientes do arquivo, guardar num vetor
-  cliente **vetor_clientes = cliente_list();
+  cliente **vetor_clientes = cliente_list(database);
   //Ponteiro para retornar
   cliente *retorno = NULL;
   //Iterar pelos clientes
@@ -194,10 +194,10 @@ cliente *cliente_get(long long int cpf) {
 }
 
 /*Adiciona um novo cliente. Retorna 0 caso seja bem sucedido, -1 caso contrário*/
-int cliente_post(cliente *in) {
+int cliente_post(char *database, cliente *in) {
   FILE *arquivo;
   //Abrir o arquivo, checar por erros
-  arquivo = fopen("data/clientes.txt", "a");
+  arquivo = fopen(database, "a");
   if (arquivo == NULL) {
     printf(RED"** Erro ao escrever o arquivo clientes **\n"RESET);
     return(-1);
@@ -217,22 +217,22 @@ int cliente_post(cliente *in) {
 }
 
 /*Apaga um cliente do banco de dadoss, dado seu cpf. Retorna 0 caso bem sucedido, -1 caso contrário.*/
-int cliente_delete(long long int cpf) {
+int cliente_delete(char *database, long long int cpf) {
   //Abrir os arquivos e verificar por erros
   FILE *arquivo_source, *arquivo_target;
-  arquivo_source = fopen("data/clientes.txt", "r");
+  arquivo_source = fopen(database, "r");
   if (arquivo_source == NULL) {
     printf(RED"** Erro ao ler o arquivo clientes **\n"RESET);
     return(-1);
   }
-  arquivo_target = fopen("data/clientes.tmp", "w");
+  arquivo_target = fopen("clientes.tmp", "w");
   if (arquivo_source == NULL) {
     printf(RED"** Erro ao criar um novo arquivo clientes **\n"RESET);
     fclose(arquivo_source);
     return(-1);
   }
   //Definir linha a ser buscada
-  cliente *buscado = cliente_get(cpf);
+  cliente *buscado = cliente_get(database, cpf);
   if (buscado == NULL) {
     fclose(arquivo_source);
     fclose(arquivo_target);
@@ -255,9 +255,8 @@ int cliente_delete(long long int cpf) {
   fclose(arquivo_source);
   fclose(arquivo_target);
 
-  //TODO Handle erros que n sao da busca, e sim de escrever o arquivo
-  remove("data/clientes.txt");
-  rename("data/clientes.tmp", "data/clientes.txt");
+  remove(database);
+  rename("clientes.tmp", database);
 
   return(0);
 }

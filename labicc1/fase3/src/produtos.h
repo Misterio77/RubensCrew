@@ -7,9 +7,9 @@ produto *produto_criar(int id, char *nome, float valor, int estoque);
 void produto_destruir(produto *in);
 char *produto_info(produto *in);
 
-produto **produto_list();
-produto *produto_get(int id);
-int produto_post(produto *in);
-int produto_delete(int id);
+produto **produto_list(char *database);
+produto *produto_get(char *database, int id);
+int produto_post(char *database, produto *in);
+int produto_delete(char *database, int id);
 
 #endif

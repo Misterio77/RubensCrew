@@ -1,9 +1,2 @@
 50129048852;Layla Miranda;laymiranda.b@gmail.com
 23858708860;Gabriel Silva Fontes;gsfontes2000@gmail.com
-3;3;3
-4;4;4
-5;5;5
-6;6;6
-a;1;1
-;;;
-a;;
