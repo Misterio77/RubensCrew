@@ -30,8 +30,8 @@ struct _produto {
 /*Recebe os campos, aloca e constroi uma instancia de produto*/
 produto *produto_criar(int id, char *nome, float valor, int estoque) {
   //Checar se algum campo é inválido
-  if (id == 0 || nome == NULL) {
-    printf(RED"** Campos inválidos **\n"RESET);
+  if (id == 0 || nome == NULL || valor == 0) {
+    printf(RED"** Campos inválidos fornecidos **\n"RESET);
     return(NULL);
   }
   //Produto a ser retornoado
@@ -65,7 +65,7 @@ char *produto_info(produto *in) {
   }
   
   char buffer[MAX_LINESIZE] = "";
-  snprintf(buffer, MAX_LINESIZE, "ID: %d | Nome: %s | Valor: %f | Estoque: %d", in->id, in->nome, in->valor, in->estoque);
+  snprintf(buffer, MAX_LINESIZE, "ID: %d | Nome: %s | Valor: %.2f | Estoque: %d", in->id, in->nome, in->valor, in->estoque);
   char *out = strdup(buffer);
   return(out);
 }
@@ -110,7 +110,7 @@ char *produto_unparse(produto *in) {
   }
   //Converter na string formatada usando um buffer temporário
   char buffer[MAX_LINESIZE] = "";
-  snprintf(buffer, MAX_LINESIZE, "%d;%s;%f;%d", in->id, in->nome, in->valor, in->estoque);
+  snprintf(buffer, MAX_LINESIZE, "%d;%s;%.2f;%d", in->id, in->nome, in->valor, in->estoque);
   //Alocar uma string do tamanho certinho e copiar
   char *out = strdup(buffer);
 
@@ -204,19 +204,23 @@ int produto_post(char *database, produto *in) {
   arquivo = fopen(database, "a");
   if (arquivo == NULL) {
     printf(RED"** Erro ao escrever o arquivo produtos **\n"RESET);
-    return(0);
+    return(-1);
   }
 
   //Transformar o produto a ser adicionado em string formatada
   char *output = produto_unparse(in);
-  if (output == NULL) return (-1);
+  if (output == NULL) {
+      fclose(arquivo);
+      return (-1);
+  }
   //Colocar no fim do arquivo
   fputs(output, arquivo);
   fputs("\n", arquivo);
 
+  free(output);
   fclose(arquivo);
 
-  return(-1);
+  return(0);
 }
 
 /*Apaga um produto do banco de dados, dado seu id. Retorna 0 caso bem sucedido, -1 caso contrário.*/
@@ -261,5 +265,39 @@ int produto_delete(char *database, int id) {
   remove(database);
   rename("produtos.tmp", database);
 
+  return(0);
+}
+
+/*
+Altera o estoque de um produto
+*/
+int produto_alterar_estoque(char *database, int id, int mudanca) {
+  //Buscar o produto, verificar se foi encontrado
+  produto *alvo = produto_get(database, id);
+  if (alvo == NULL) {
+    return(-1);
+  }
+
+  //Modificar estoque
+  alvo->estoque += mudanca;
+  if (alvo->estoque < 0) {
+    printf(RED"** O estoque não pode ficar negativo **\n"RESET);
+    produto_destruir(alvo);
+    return(-1);
+  }
+  
+  //Apagar o produto da database
+  if (produto_delete(database, id) != 0) {
+    produto_destruir(alvo);
+    return(-1);
+  }
+
+  //Fazer mudança
+  if (produto_post(database, alvo) != 0) {
+    produto_destruir(alvo);
+    return(-1);
+  }
+
+  produto_destruir(alvo);
   return(0);
 }

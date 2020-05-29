@@ -30,7 +30,7 @@ struct _cliente {
 cliente *cliente_criar(long long int cpf, char *nome, char *email) {
   //Checar se algum campo é NULL
   if (cpf == 0 || nome == NULL || email == NULL) {
-    printf(RED"** Campos inválidos fornecidos**\n"RESET);
+    printf(RED"** Campos inválidos fornecidos **\n"RESET);
     return(NULL);
   }
   //Cliente a ser retornoado
@@ -205,7 +205,10 @@ int cliente_post(char *database, cliente *in) {
 
   //Transformar o cliente a ser adicionado em string formatada
   char *output = cliente_unparse(in);
-  if (output == NULL) return (-1);
+  if (output == NULL) {
+    fclose(arquivo);
+    return (-1);
+  }
   //Colocar no fim do arquivo
   fputs(output, arquivo);
   fputs("\n", arquivo);

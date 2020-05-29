@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 
 //Cores para output
 #define RED     "\x1b[31m"
@@ -13,26 +14,18 @@
 #define CYAN    "\x1b[36m"
 #define RESET   "\x1b[0m"
 
-//Alternativa mais segura a scanf, e mais facil de recuperar de erros
-int ler_int() {
-  char buffer[256];
-  int retorno;
 
-  printf(BLUE">"RESET);
-
-  if(fgets(buffer, 256, stdin)) {
-    if (1 == sscanf(buffer, "%d", &retorno)) {
-      return(retorno);
-    }
-  }
-  return(0);
-}
-
-long long int ler_cpf() {
+/*
+Função generica pra ler um numero inteiro.
+Usa fgets e sscanf pra ler de forma segura
+O argumento prompt é usado para exibir algo ao usuário
+Retorna 0 em caso de erro
+*/
+long long int ler_num(char *prompt) {
   char buffer[256];
   long long int retorno;
 
-  printf(BLUE"[CPF] >"RESET);
+  printf(BLUE"%s"RESET, prompt);
 
   if(fgets(buffer, 256, stdin)) {
     if (1 == sscanf(buffer, "%lld", &retorno)) {
@@ -42,29 +35,40 @@ long long int ler_cpf() {
   return(0);
 }
 
-char *ler_nome() {
+/*
+Função generica pra ler um numero decimal.
+Usa fgets e sscanf pra ler de forma segura
+O argumento prompt é usado para exibir algo ao usuário
+Retorna 0 em caso de erro
+*/
+double ler_dec(char *prompt) {
   char buffer[256];
-  char *retorno;
+  double retorno;
 
-  printf(BLUE"[NOME] >"RESET);
+  printf(BLUE"%s"RESET, prompt);
 
   if(fgets(buffer, 256, stdin)) {
-    if (1 == sscanf(buffer, "%[^\n]", buffer)) {
-      retorno = strdup(buffer);
+    if (1 == sscanf(buffer, "%lf", &retorno)) {
       return(retorno);
     }
   }
-  return(NULL);
+  return(0);
 }
 
-char *ler_email() {
+/*
+Função generica pra ler string
+Usa fgets e sscanf pra ler de forma segura
+O argumento prompt é usado para exibir algo ao usuário
+Retorna NULL em caso de erro
+*/
+char *ler_string(char *prompt) {
   char buffer[256];
   char *retorno;
 
-  printf(BLUE"[EMAIL] >"RESET);
+  printf(BLUE"%s"RESET, prompt);
 
   if(fgets(buffer, 256, stdin)) {
-    if (1 == sscanf(buffer, "%s", buffer)) {
+    if (1 == sscanf(buffer, "%[^\n]", buffer)) {
       retorno = strdup(buffer);
       return(retorno);
     }
@@ -78,7 +82,14 @@ void imprimir_cliente(cliente *in) {
   free(info);
 }
 
+void imprimir_produto(produto *in) {
+  char *info = produto_info(in);
+  printf("%s\n", info);
+  free(info);
+}
+
 int main() {
+  setlocale(LC_ALL, "");
   char arquivo_clientes[] = "data/clientes.txt";
   char arquivo_produtos[] = "data/produtos.txt";
 
@@ -111,7 +122,7 @@ int main() {
     printf(GREEN"2 - Produtos\n"RESET);
     printf(RED  "0 - Sair\n"RESET);
     
-    int escolha = ler_int();
+    int escolha = ler_num(">");
 
     //Menu Clientes
     if (escolha == 1) {
@@ -129,7 +140,7 @@ int main() {
         printf(RED  "0 - Voltar ao menu\n"RESET);
   
         //Ler numero
-        int escolha = ler_int();
+        int escolha = ler_num(">");
 
         //Listar clientes
         if (escolha == 1) {
@@ -155,7 +166,7 @@ int main() {
           printf("Digite o CPF do cliente (apenas números): \n");
           //Receber cpf do usuario, buscar utilizando ele
           //E atribuir a instancia
-          cliente *consulta = cliente_get(arquivo_clientes, ler_cpf());
+          cliente *consulta = cliente_get(arquivo_clientes, ler_num("[CPF] >"));
           if (consulta != NULL) {
             printf(BLUE"------\n"RESET);
             //Imprimir instancia
@@ -169,9 +180,9 @@ int main() {
         //Cadastrar um cliente
         else if (escolha == 3) {
           printf("Digite o CPF (apenas numeros), nome e email do cliente:\n");
-          long long int cpf = ler_cpf();
-          char *nome = ler_nome();
-          char *email = ler_email();
+          long long int cpf = ler_num("[CPF] >");
+          char *nome = ler_string("[NOME] >");
+          char *email = ler_string("[EMAIL] >");
           
           //Criar nova instancia de cliente
           cliente *novo = cliente_criar(cpf, nome, email);
@@ -189,9 +200,10 @@ int main() {
         //Apagar um cliente
         else if (escolha == 4) {
           printf("Digite o CPF do cliente (apenas números): \n");
+          long long int cpf = ler_num("[CPF] >");
           //Ler cpf e apagar cliente da database
           //Caso seja bem-sucedido (resposta 0), imprimir na tela avisando
-          if (cliente_delete(arquivo_clientes, ler_cpf()) == 0) printf(GREEN"Cliente removido!\n"RESET);
+          if (cliente_delete(arquivo_clientes, cpf) == 0) printf(GREEN"Cliente removido!\n"RESET);
         }
 
         //Sair do menu
@@ -209,11 +221,91 @@ int main() {
         printf("Produtos\n");
         printf("========\n"RESET);
         printf("O que você deseja fazer?\n");
-        printf(GREEN"1 - Listar todos os clientes\n"RESET);
-        printf(GREEN"2 - Consultar um cliente\n"RESET);
-        printf(GREEN"3 - Cadastrar um cliente\n"RESET);
-        printf(GREEN"4 - Remover um cliente\n"RESET);
+        printf(GREEN"1 - Listar todos os produtos\n"RESET);
+        printf(GREEN"2 - Consultar um produto\n"RESET);
+        printf(GREEN"3 - Cadastrar um produto\n"RESET);
+        printf(GREEN"4 - Remover um produto\n"RESET);
+        printf(GREEN"5 - Alterar o estoque de um produto\n"RESET);
         printf(RED  "0 - Voltar ao menu\n"RESET);
+        
+        //Ler numero
+        int escolha = ler_num(">");
+
+        //Listar produtos
+        if (escolha == 1) {
+          //Criar vetor com produtos
+          produto **vetor = produto_list(arquivo_produtos);
+          //Caso lido corretamente
+          if (vetor != NULL) {
+            printf(BLUE"------\n"RESET);
+            for (int i = 0; vetor[i] != NULL; i++) {
+              //Imprimir cada produto
+              imprimir_produto(vetor[i]);
+              //E desalocar logo em seguida
+              produto_destruir(vetor[i]);
+            }
+            //Desalocar vetor
+            free(vetor);
+            printf(BLUE"------\n"RESET);
+          }
+        }
+
+        //Consultar um produto
+        else if (escolha == 2) {
+          printf("Digite o ID do produto: \n");
+          //Receber cpf do usuario, buscar utilizando ele
+          //E atribuir a instancia
+          produto *consulta = produto_get(arquivo_produtos, ler_num("[ID] >"));
+          if (consulta != NULL) {
+            printf(BLUE"------\n"RESET);
+            //Imprimir instancia
+            imprimir_produto(consulta);
+            //Destruir instancia
+            produto_destruir(consulta);
+            printf(BLUE"------\n"RESET);
+          }
+        }
+   
+        //Cadastrar um produto
+        else if (escolha == 3) {
+          printf("Digite o ID, nome, valor (apenas números e '%s') e estoque do produto:\n", localeconv()->mon_decimal_point);
+          int id = ler_num("[ID] >");
+          char *nome = ler_string("[NOME] >");
+          float valor = ler_dec("[VALOR] >");
+          int estoque = ler_num("[ESTOQUE] >");
+ 
+          //Criar nova instancia de produto
+          produto *novo = produto_criar(id, nome, valor, estoque);
+          //Desalocar a string lida
+          free(nome);
+
+          //Postar instancia na database
+          //Caso seja bem-sucedido (resposta 0), imprimir na tela avisando
+          if (produto_post(arquivo_produtos, novo) == 0) printf(GREEN"Produto adicionado!\n"RESET);
+          //Desalocar instancia
+          produto_destruir(novo);
+        }
+
+        //Apagar um produto
+        else if (escolha == 4) {
+          printf("Digite o ID do produto: \n");
+          int id = ler_num("[ID] >");
+          //Ler id e produto da database
+          //Caso seja bem-sucedido (resposta 0), imprimir na tela avisando
+          if (produto_delete(arquivo_produtos, id) == 0) printf(GREEN"Produto removido!\n"RESET);
+        }
+
+        else if (escolha == 5) {
+          printf("Digite o ID do produto e a mudança de estoque (negativo para retirar)\n");
+          int id = ler_num("[ID] >");
+          int mudanca = ler_num("[ESTOQUE] >");
+          if (produto_alterar_estoque(arquivo_produtos, id, mudanca) == 0) printf("Estoque alterado!");
+        }
+
+        //Sair do menu
+        else {
+          break;
+        }
       }
     }
 

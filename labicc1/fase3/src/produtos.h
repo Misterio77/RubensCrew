@@ -11,5 +11,6 @@ produto **produto_list(char *database);
 produto *produto_get(char *database, int id);
 int produto_post(char *database, produto *in);
 int produto_delete(char *database, int id);
+int produto_alterar_estoque(char *database, int id, int mudanca);
 
 #endif
