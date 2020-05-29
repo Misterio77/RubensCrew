@@ -47,16 +47,15 @@ void cliente_destruir(cliente *in) {
   return;
 }
 
-/*Recebe um cliente, exibe informação formatada sobre ele (ideal para printar)*/
-void cliente_info(cliente *in) {
+/*Recebe um cliente, devolve informação formatada sobre ele*/
+char *cliente_info(cliente *in) {
   if (in == NULL) {
     printf("** Cliente inválido **\n");
     return (NULL);
   }
   char buffer[MAX_LINESIZE] = "";
   snprintf(buffer, MAX_LINESIZE, "CPF: %lld | Nome: %s | Email: %s", in->cpf, in->nome, in->email);
-  char *out;
-  strdup(out, buffer);
+  char *out = strdup(buffer);
   return(out);
 }
 
@@ -70,13 +69,23 @@ cliente *cliente_parse(char *in) {
   char *s = strdup(in);
 
   //Cortar usando o delimitador
-  long long int in_cpf = strtol(strtok(s, ";"), NULL, 10);
-  char *in_nome        = strtok(NULL, ";");
-  char *in_email       = strtok(NULL, ";");
+  char *in_cpf   = strtok(s, ";");
+  char *in_nome  = strtok(NULL, ";");
+  char *in_email = strtok(NULL, ";");
 
-  cliente *out = cliente_criar(in_cpf, in_nome, in_email);
+  //Verificar se foi possível ler todos
+  if (in_cpf == NULL || in_nome == NULL || in_email == NULL) {
+    free(s);
+    return(NULL);
+  }
+
+  cliente *out = cliente_criar(
+    (long long int) strtol(in_cpf, NULL, 10),
+    in_nome,
+    in_email
+  );
+
   free(s);
-
   return(out);
 }
 

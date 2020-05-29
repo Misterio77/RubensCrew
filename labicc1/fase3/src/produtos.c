@@ -48,8 +48,8 @@ void produto_destruir(produto *in) {
   return;
 }
 
-/*Recebe um produto, exibe informação formatada sobre ele*/
-void produto_info(produto *in) {
+/*Recebe um produto, retorna informação formatada sobre ele*/
+char *produto_info(produto *in) {
   if (in == NULL) {
     printf("** Produto inválido **\n");
     return (NULL);
@@ -57,8 +57,7 @@ void produto_info(produto *in) {
   
   char buffer[MAX_LINESIZE] = "";
   snprintf(buffer, MAX_LINESIZE, "ID: %d | Nome: %s | Valor: %f | Estoque: %d", in->id, in->nome, in->valor, in->estoque);
-  char *out;
-  strdup(out, buffer);
+  char *out = strdup(buffer);
   return(out);
 }
 
@@ -72,14 +71,25 @@ produto *produto_parse(char *in) {
   char *s = strdup(in);
 
   //Cortar usando o delimitador
-  int in_id      = (int) strtol(strtok(s, ";"), NULL, 10);
-  char *in_nome  = strtok(NULL, ";");
-  float in_valor = strtod(strtok(NULL, ";"), NULL);
-  int in_estoque = (int) strtol(strtok(NULL, ";"), NULL, 10);
+  char *in_id      = strtok(s, ";");
+  char *in_nome    = strtok(NULL, ";");
+  char *in_valor   = strtok(NULL, ";");
+  char *in_estoque = strtok(NULL, ";");
+  
+  //Verificar se foi possível ler todos
+  if (in_id == NULL || in_nome == NULL || in_valor == NULL || in_estoque == NULL) {
+    free(s);
+    return(NULL);
+  }
 
-  produto *out = produto_criar(in_id, in_nome, in_valor, in_estoque);
+  produto *out = produto_criar(
+    (int) strtol(in_id, NULL, 10),
+    in_nome,
+    (float) strtod(in_valor, NULL),
+    (int) strtol(in_estoque, NULL, 10)
+  );
+
   free(s);
-
   return(out);
 }
 

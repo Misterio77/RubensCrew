@@ -1,8 +1,11 @@
 #include "clientes.h"
+#include "produtos.h"
 #include <stdio.h>
 
 int main() {
-  cliente *a = cliente_get(23858708860);
-  printf("%s\n", cliente_info(a));
-  cliente_destruir(a);
+  produto *a = produto_get(1234);
+  if (a != NULL) {
+    printf("%s\n", produto_info(a));
+    produto_destruir(a);
+ }
 }
