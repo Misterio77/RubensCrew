@@ -1,3 +1,14 @@
+/* Trabalho Lab ICC1 - Sistema de mercado
+ *
+ * 10856803 - Gabriel Silva Fontes
+ * 11912533 - Samuel Rubens
+ * 11816139 - Julio Igor Casemiro Oliveira
+ * xxxxxxxx - João Pedro
+ * xxxxxxxx - Augusto
+ *
+ */
+
+
 #include "clientes.h"
 #include "produtos.h"
 #include <stdio.h>
