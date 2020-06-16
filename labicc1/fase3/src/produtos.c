@@ -224,10 +224,12 @@ int produto_post(char *database, produto *in, int silent) {
   }
 
   //Verificar se existe
-  if (produto_get(database, in->id, 1) != NULL) {
+  produto *buscado = produto_get(database, in->id, 1);
+  if (buscado != NULL) {
     if (!silent) printf(RED"** Produto já existe, substituindo **\n"RESET);
     //Apagar todos, ate nao encontrar mais
     while(produto_delete(database, in->id, 1) != -1);
+    produto_destruir(buscado);
   }
 
   //Abrir o arquivo, checar por erros
@@ -283,12 +285,15 @@ int produto_delete(char *database, int id, int silent) {
     //Remover trailing newline
     linha[strcspn(linha, "\n")] = 0;
     //Vamos parsear e unparsear a linha. Assim evitamos um problema de comparação quando há duas formas de escrever no arquivo o mesmo campo (ex: decimal e espaços)
-    char *linha_corrigida = produto_unparse(produto_parse(linha, silent), silent);
+    produto *linha_parsed = produto_parse(linha, silent);
+    char *linha_unparsed = produto_unparse(linha_parsed, silent);
     //Somente copiar se NÃO for a linha que buscamos
-    if (strcmp(linha_corrigida, buscado_unparsed) != 0) {
-      fputs(linha_corrigida, arquivo_target);
+    if (strcmp(linha_unparsed, buscado_unparsed) != 0) {
+      fputs(linha_unparsed, arquivo_target);
       fputs("\n", arquivo_target);
     }
+    produto_destruir(linha_parsed);
+    free(linha_unparsed);
   } while(1);
 
   free(buscado_unparsed);
