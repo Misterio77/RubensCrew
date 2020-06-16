@@ -98,6 +98,10 @@ produto *produto_parse(char *in, int silent) {
   
   //Verificar se foi possível ler todos
   if (in_id == NULL || in_nome == NULL || in_valor == NULL || in_estoque == NULL) {
+    if (in_id != NULL) free(in_id);
+    if (in_nome != NULL) free(in_nome);
+    if (in_valor != NULL) free(in_valor);
+    if (in_estoque != NULL) free(in_estoque);
     free(s);
     return(NULL);
   }

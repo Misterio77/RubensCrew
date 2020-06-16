@@ -96,6 +96,9 @@ cliente *cliente_parse(char *in, int silent) {
 
   //Verificar se foi possível ler todos
   if (in_cpf == NULL || in_nome == NULL || in_email == NULL) {
+    if (in_cpf != NULL) free(in_cpf);
+    if (in_nome != NULL) free(in_nome);
+    if (in_email != NULL) free(in_email);
     free(s);
     return(NULL);
   }
@@ -217,10 +220,12 @@ int cliente_post(char *database, cliente *in, int silent) {
   }
 
   //Verificar se existe
-  if (cliente_get(database, in->cpf, 1) != NULL) {
+  cliente *buscado = cliente_get(database, in->cpf, 1);
+  if (buscado != NULL) {
     if (!silent) printf(RED"** Cliente já existe, substituindo **\n"RESET);
     //Apagar todos, ate nao encontrar mais
     while(cliente_delete(database, in->cpf, 1) != -1);
+    cliente_destruir(buscado);
   }
 
   //Abrir o arquivo, checar por erros
@@ -276,12 +281,15 @@ int cliente_delete(char *database, long long int cpf, int silent) {
     //Remover trailing newline
     linha[strcspn(linha, "\n")] = 0;
     //Vamos parsear e unparsear a linha. Assim evitamos um problema de comparação quando há duas formas de escrever no arquivo o mesmo campo (ex: decimal e espaços)
-    char *linha_corrigida = cliente_unparse(cliente_parse(linha, silent), silent);
+    cliente *linha_parsed = cliente_parse(linha, silent);
+    char *linha_unparsed = cliente_unparse(linha_parsed, silent);
     //Somente copiar se NÃO for a linha que buscamos
-    if (strcmp(linha_corrigida, buscado_unparsed) != 0) {
-      fputs(linha_corrigida, arquivo_target);
+    if (strcmp(linha_unparsed, buscado_unparsed) != 0) {
+      fputs(linha_unparsed, arquivo_target);
       fputs("\n", arquivo_target);
     }
+    cliente_destruir(linha_parsed);
+    free(linha_unparsed);
   } while(1);
 
   free(buscado_unparsed);
