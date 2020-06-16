@@ -88,13 +88,13 @@ char *ler_string(char *prompt) {
 }
 
 void imprimir_cliente(cliente *in) {
-  char *info = cliente_info(in);
+  char *info = cliente_info(in, 0);
   printf("%s\n", info);
   free(info);
 }
 
 void imprimir_produto(produto *in) {
-  char *info = produto_info(in);
+  char *info = produto_info(in, 0);
   printf("%s\n", info);
   free(info);
 }
@@ -156,7 +156,7 @@ int main() {
         //Listar clientes
         if (escolha == 1) {
           //Criar vetor com clientes
-          cliente **vetor = cliente_list(arquivo_clientes);
+          cliente **vetor = cliente_list(arquivo_clientes, 0);
           //Caso lido corretamente
           if (vetor != NULL) {
             printf(BLUE"------\n"RESET);
@@ -177,7 +177,7 @@ int main() {
           printf("Digite o CPF do cliente (apenas números): \n");
           //Receber cpf do usuario, buscar utilizando ele
           //E atribuir a instancia
-          cliente *consulta = cliente_get(arquivo_clientes, ler_num("[CPF] >"));
+          cliente *consulta = cliente_get(arquivo_clientes, ler_num("[CPF] >"), 0);
           if (consulta != NULL) {
             printf(BLUE"------\n"RESET);
             //Imprimir instancia
@@ -196,14 +196,14 @@ int main() {
           char *email = ler_string("[EMAIL] >");
           
           //Criar nova instancia de cliente
-          cliente *novo = cliente_criar(cpf, nome, email);
+          cliente *novo = cliente_criar(cpf, nome, email, 0);
           //Desalocar as strings lidas
           free(nome);
           free(email);
 
           //Postar instancia na database
           //Caso seja bem-sucedido (resposta 0), imprimir na tela avisando
-          if (cliente_post(arquivo_clientes, novo) == 0) printf(GREEN"Cliente adicionado!\n"RESET);
+          if (cliente_post(arquivo_clientes, novo, 0) == 0) printf(GREEN"Cliente adicionado!\n"RESET);
           //Desalocar instancia
           cliente_destruir(novo);   
         }
@@ -214,7 +214,7 @@ int main() {
           long long int cpf = ler_num("[CPF] >");
           //Ler cpf e apagar cliente da database
           //Caso seja bem-sucedido (resposta 0), imprimir na tela avisando
-          if (cliente_delete(arquivo_clientes, cpf) == 0) printf(GREEN"Cliente removido!\n"RESET);
+          if (cliente_delete(arquivo_clientes, cpf, 0) == 0) printf(GREEN"Cliente removido!\n"RESET);
         }
 
         //Sair do menu
@@ -245,7 +245,7 @@ int main() {
         //Listar produtos
         if (escolha == 1) {
           //Criar vetor com produtos
-          produto **vetor = produto_list(arquivo_produtos);
+          produto **vetor = produto_list(arquivo_produtos, 0);
           //Caso lido corretamente
           if (vetor != NULL) {
             printf(BLUE"------\n"RESET);
@@ -266,7 +266,7 @@ int main() {
           printf("Digite o ID do produto: \n");
           //Receber cpf do usuario, buscar utilizando ele
           //E atribuir a instancia
-          produto *consulta = produto_get(arquivo_produtos, ler_num("[ID] >"));
+          produto *consulta = produto_get(arquivo_produtos, ler_num("[ID] >"), 0);
           if (consulta != NULL) {
             printf(BLUE"------\n"RESET);
             //Imprimir instancia
@@ -286,13 +286,13 @@ int main() {
           int estoque = ler_num("[ESTOQUE] >");
  
           //Criar nova instancia de produto
-          produto *novo = produto_criar(id, nome, valor, estoque);
+          produto *novo = produto_criar(id, nome, valor, estoque, 0);
           //Desalocar a string lida
           free(nome);
 
           //Postar instancia na database
           //Caso seja bem-sucedido (resposta 0), imprimir na tela avisando
-          if (produto_post(arquivo_produtos, novo) == 0) printf(GREEN"Produto adicionado!\n"RESET);
+          if (produto_post(arquivo_produtos, novo, 0) == 0) printf(GREEN"Produto adicionado!\n"RESET);
           //Desalocar instancia
           produto_destruir(novo);
         }
@@ -303,14 +303,14 @@ int main() {
           int id = ler_num("[ID] >");
           //Ler id e produto da database
           //Caso seja bem-sucedido (resposta 0), imprimir na tela avisando
-          if (produto_delete(arquivo_produtos, id) == 0) printf(GREEN"Produto removido!\n"RESET);
+          if (produto_delete(arquivo_produtos, id, 0) == 0) printf(GREEN"Produto removido!\n"RESET);
         }
 
         else if (escolha == 5) {
           printf("Digite o ID do produto e a mudança de estoque (negativo para retirar)\n");
           int id = ler_num("[ID] >");
           int mudanca = ler_num("[ESTOQUE] >");
-          if (produto_alterar_estoque(arquivo_produtos, id, mudanca) == 0) printf("Estoque alterado!");
+          if (produto_alterar_estoque(arquivo_produtos, id, mudanca, 0) == 0) printf("Estoque alterado!");
         }
 
         //Sair do menu

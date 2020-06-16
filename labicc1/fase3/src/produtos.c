@@ -39,16 +39,16 @@ struct _produto {
 //====== Funções básicas do TAD  ======
 
 /*Recebe os campos, aloca e constroi uma instancia de produto*/
-produto *produto_criar(int id, char *nome, float valor, int estoque) {
+produto *produto_criar(int id, char *nome, float valor, int estoque, int silent) {
   //Checar se algum campo é inválido
   if (id == 0 || nome == NULL || valor == 0) {
-    printf(RED"** Campos inválidos fornecidos **\n"RESET);
+    if (!silent) printf(RED"** Campos inválidos fornecidos **\n"RESET);
     return(NULL);
   }
   //Produto a ser retornoado
   produto *out = malloc(sizeof(produto));
   if (out == NULL) {
-    printf(RED"** Erro ao alocar **\n"RESET);
+    if (!silent) printf(RED"** Erro ao alocar **\n"RESET);
     return(NULL);
   }
   //Campos
@@ -69,9 +69,9 @@ void produto_destruir(produto *in) {
 }
 
 /*Recebe um produto, retorna informação formatada sobre ele*/
-char *produto_info(produto *in) {
+char *produto_info(produto *in, int silent) {
   if (in == NULL) {
-    printf(RED"** Produto inválido **\n"RESET);
+    if (!silent) printf(RED"** Produto inválido **\n"RESET);
     return (NULL);
   }
   
@@ -87,7 +87,7 @@ char *produto_info(produto *in) {
 //====== Funções para parse e unparse (não são públicas) ======
 
 /*Corta e formata uma linha (um produto), aloca a estrutura e retorna*/
-produto *produto_parse(char *in) {
+produto *produto_parse(char *in, int silent) {
   char *s = strdup(in);
 
   //Cortar usando o delimitador
@@ -106,7 +106,8 @@ produto *produto_parse(char *in) {
     (int) strtol(in_id, NULL, 10),
     in_nome,
     (float) strtod(in_valor, NULL),
-    (int) strtol(in_estoque, NULL, 10)
+    (int) strtol(in_estoque, NULL, 10),
+    silent
   );
 
   free(s);
@@ -114,9 +115,9 @@ produto *produto_parse(char *in) {
 }
 
 /*Recebe um produto, e devolve a linha formatada para armazenamento ou busca*/
-char *produto_unparse(produto *in) {
+char *produto_unparse(produto *in, int silent) {
   if (in == NULL) {
-    printf(RED"** Produto inválido **\n"RESET);
+    if (!silent) printf(RED"** Produto inválido **\n"RESET);
     return(NULL);
   }
   //Converter na string formatada usando um buffer temporário
@@ -132,12 +133,12 @@ char *produto_unparse(produto *in) {
 //====== Funções para modificação da database. ======
 
 /*Retorna um vetor com todos os produtos armazenados, NULL caso mal-sucedido*/
-produto **produto_list(char *database) {
+produto **produto_list(char *database, int silent) {
   FILE *arquivo;
   //Abrir o arquivo, checar por erros
   arquivo = fopen(database,"r");
   if (arquivo == NULL) {
-    printf(RED"** Erro ao abrir o arquivo produtos **\n"RESET);
+    if (!silent) printf(RED"** Erro ao abrir o arquivo produtos **\n"RESET);
     return(NULL);
   }
   //Declara o vetor apontando para null
@@ -156,16 +157,16 @@ produto **produto_list(char *database) {
     //Realocar o vetor para a quantidade de linhas lidas até agora
     vetor_produtos = realloc(vetor_produtos, (posicao_vetor+1) * sizeof(produto*));
     if (vetor_produtos == NULL) {
-      printf(RED"** Erro ao realocar **\n"RESET);
+      if (!silent) printf(RED"** Erro ao realocar **\n"RESET);
       return(NULL);
     }
 
     //Formata e aloca o produto
-    produto *produto_atual = produto_parse(linha);
+    produto *produto_atual = produto_parse(linha, silent);
 
     //Vamos verificar se é valido
     if (produto_atual == NULL) {
-      printf(RED"** Erro ao processar o produto na posição %d, pulando **\n"RESET, posicao_arquivo);
+      if (!silent) printf(RED"** Erro ao processar o produto na posição %d, pulando **\n"RESET, posicao_arquivo);
       //Caso não seja válido, não vamos incrementar posicao_vetor (evitar espaços vazios)
     }
     else {
@@ -184,9 +185,9 @@ produto **produto_list(char *database) {
 }
 
 /*Retorna um produto, dado seu id. (Implementado como busca sequencial) Retorna NULL caso mal-sucedido*/
-produto *produto_get(char *database, int id) {
+produto *produto_get(char *database, int id, int silent) {
   //Carregar os produtos do arquivo, guardar num vetor
-  produto **vetor_produtos = produto_list(database);
+  produto **vetor_produtos = produto_list(database, silent);
   //Ponteiro para retornar
   produto *retorno = NULL;
   //Iterar pelos produtos
@@ -203,27 +204,35 @@ produto *produto_get(char *database, int id) {
   //Liberar a memória do vetor
   for (int j = 0; vetor_produtos[j] != NULL; j++) produto_destruir(vetor_produtos[j]);
   free(vetor_produtos);
-  printf(RED"** Produto não encontrado **\n"RESET);
+  if (!silent) printf(RED"** Produto não encontrado **\n"RESET);
   return(NULL);
 
 }
 
 /*Adiciona um novo produto. Retorna 0 caso seja bem sucedido, -1 caso contrário*/
-int produto_post(char *database, produto *in) {
+int produto_post(char *database, produto *in, int silent) {
   FILE *arquivo;
+
+  //Transformar o produto a ser adicionado em string formatada
+  char *output = produto_unparse(in, silent);
+  if (output == NULL) {
+      return (-1);
+  }
+
+  //Verificar se existe
+  if (produto_get(database, in->id, 1) != NULL) {
+    if (!silent) printf(RED"** Produto já existe, substituindo **\n"RESET);
+    //Apagar todos, ate nao encontrar mais
+    while(produto_delete(database, in->id, 1) != -1);
+  }
+
   //Abrir o arquivo, checar por erros
   arquivo = fopen(database, "a");
   if (arquivo == NULL) {
-    printf(RED"** Erro ao escrever o arquivo produtos **\n"RESET);
+    if (!silent) printf(RED"** Erro ao escrever o arquivo produtos **\n"RESET);
     return(-1);
   }
 
-  //Transformar o produto a ser adicionado em string formatada
-  char *output = produto_unparse(in);
-  if (output == NULL) {
-      fclose(arquivo);
-      return (-1);
-  }
   //Colocar no fim do arquivo
   fputs(output, arquivo);
   fputs("\n", arquivo);
@@ -235,36 +244,45 @@ int produto_post(char *database, produto *in) {
 }
 
 /*Apaga um produto do banco de dados, dado seu id. Retorna 0 caso bem sucedido, -1 caso contrário.*/
-int produto_delete(char *database, int id) {
-  //Abrir os arquivos e verificar por erros
+int produto_delete(char *database, int id, int silent) {
   FILE *arquivo_source, *arquivo_target;
+  //Abrir arquivo inicial
   arquivo_source = fopen(database, "r");
   if (arquivo_source == NULL) {
-    printf(RED"** Erro ao ler o arquivo produtos **\n"RESET);
-    return(-1);
-  }
-  arquivo_target = fopen("produtos.tmp", "w");
-  if (arquivo_source == NULL) {
-    printf(RED"** Erro ao criar um novo arquivo produtos **\n"RESET);
-    fclose(arquivo_source);
+    if (!silent) printf(RED"** Erro ao ler o arquivo produtos **\n"RESET);
     return(-1);
   }
   //Definir linha a ser buscada
-  produto *buscado = produto_get(database, id);
+  produto *buscado = produto_get(database, id, silent);
   if (buscado == NULL) {
     fclose(arquivo_source);
-    fclose(arquivo_target);
     return (-1);
   }
-  char *buscado_unparsed = produto_unparse(buscado);
+  //Abrir arquivo destino
+  arquivo_target = fopen("produtos.tmp", "w");
+  if (arquivo_source == NULL) {
+    if (!silent) printf(RED"** Erro ao criar um novo arquivo produtos **\n"RESET);
+    fclose(arquivo_source);
+    return(-1);
+  }
+  //Transformar em string
+  char *buscado_unparsed = produto_unparse(buscado, silent);
+  //Desalocar estrutura
   produto_destruir(buscado);
 
+  //Copiar arquivo, exceto linha a ser apagada
   do {
+    //buffer
     char linha[MAX_LINESIZE];
+    //Pegar linha do arquivo source
     if (fgets(linha, MAX_LINESIZE, arquivo_source) == NULL) break;
-    linha[strcspn(linha, "\n")] = 0; //Remover trailing newline
-    if (strcmp(linha, buscado_unparsed) != 0) {
-      fputs(linha, arquivo_target);
+    //Remover trailing newline
+    linha[strcspn(linha, "\n")] = 0;
+    //Vamos parsear e unparsear a linha. Assim evitamos um problema de comparação quando há duas formas de escrever no arquivo o mesmo campo (ex: decimal e espaços)
+    char *linha_corrigida = produto_unparse(produto_parse(linha, silent), silent);
+    //Somente copiar se NÃO for a linha que buscamos
+    if (strcmp(linha_corrigida, buscado_unparsed) != 0) {
+      fputs(linha_corrigida, arquivo_target);
       fputs("\n", arquivo_target);
     }
   } while(1);
@@ -282,9 +300,9 @@ int produto_delete(char *database, int id) {
 /*
 Altera o estoque de um produto
 */
-int produto_alterar_estoque(char *database, int id, int mudanca) {
+int produto_alterar_estoque(char *database, int id, int mudanca, int silent) {
   //Buscar o produto, verificar se foi encontrado
-  produto *alvo = produto_get(database, id);
+  produto *alvo = produto_get(database, id, silent);
   if (alvo == NULL) {
     return(-1);
   }
@@ -292,19 +310,19 @@ int produto_alterar_estoque(char *database, int id, int mudanca) {
   //Modificar estoque
   alvo->estoque += mudanca;
   if (alvo->estoque < 0) {
-    printf(RED"** O estoque não pode ficar negativo **\n"RESET);
+    if (!silent) printf(RED"** O estoque não pode ficar negativo **\n"RESET);
     produto_destruir(alvo);
     return(-1);
   }
   
   //Apagar o produto da database
-  if (produto_delete(database, id) != 0) {
+  if (produto_delete(database, id, silent) != 0) {
     produto_destruir(alvo);
     return(-1);
   }
 
   //Fazer mudança
-  if (produto_post(database, alvo) != 0) {
+  if (produto_post(database, alvo, silent) != 0) {
     produto_destruir(alvo);
     return(-1);
   }
